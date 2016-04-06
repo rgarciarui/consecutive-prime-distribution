@@ -1,11 +1,13 @@
 #include <iostream>
 #include <bitset>
 #include <cassert>
+#include <boost/thread.hpp>
 
 // The highest number considered will be 2 * NUM_PRIME_BITS + 1
 // The billionth prime number is 29,996,224,275,833
 // This is totally impractical :-/
-const unsigned int NUM_PRIME_BITS = 2738430;
+const unsigned int NUM_PRIME_BITS = 2738429;
+unsigned int prime_list[379311];
 
 class PrimeBitSet {
 private:
@@ -43,16 +45,30 @@ public:
   
 
 int main() {
-  // This represents odd numbers starting at 3
+  // Do prime sieve up to 5476859
   PrimeBitSet primes;
   primes.sieve();
 
-  int last = primes.get_max();
-  while (not(primes.get_prime(last))) last -= 2;
-  std::cout << "largest prime found was " << last << "\n";
+  // Populate prime list
+  unsigned int n = 3;
+  int count = 0;
+  while (count < 379311) {
+    if (primes.get_prime(n)) {
+      prime_list[count] = n;
+      count ++;
+    }
+    n += 2;
+  }
+
+  assert(prime_list[379310] == 5476859);
+
+  // How many cores does this computer have? split the work between n threads.
+  unsigned int n_cores = boost::thread::hardware_concurrency();
+  std::cerr << "starting " << n_cores << " threads.\n";
 
   return 0;
 }
+
 
 PrimeBitSet::PrimeBitSet() {
   max = index_to_number(NUM_PRIME_BITS - 1);
